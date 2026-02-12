@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Real-time campus communication for IIT Kharagpur',
 }
 
+import Navbar from './components/Navbar'
+
 export default function RootLayout({
   children,
 }: {
@@ -18,7 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar />
+          <main className="min-h-screen bg-gray-50">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   )

@@ -21,7 +21,7 @@ export interface Message {
 function generateAnonymousName(email: string): string {
   const adjectives = ['Happy', 'Bright', 'Quick', 'Clever', 'Swift', 'Bold', 'Calm', 'Cool', 'Keen', 'Nice']
   const animals = ['Panda', 'Eagle', 'Tiger', 'Wolf', 'Fox', 'Hawk', 'Owl', 'Dolphin', 'Phoenix', 'Dragon']
-  
+
   // Generate consistent hash from email
   let hash = 0
   for (let i = 0; i < email.length; i++) {
@@ -29,10 +29,10 @@ function generateAnonymousName(email: string): string {
     hash = ((hash << 5) - hash) + char
     hash = hash & hash // Convert to 32bit integer
   }
-  
+
   const adjIndex = Math.abs(hash) % adjectives.length
   const animIndex = Math.abs(hash >> 8) % animals.length
-  
+
   return `${adjectives[adjIndex]} ${animals[animIndex]}`
 }
 
@@ -43,7 +43,7 @@ export default function ChatRoom() {
   const [onlineUsers, setOnlineUsers] = useState<PresenceMember[]>([])
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
   const [currentUserFlonaName, setCurrentUserFlonaName] = useState<string>('Anonymous')
-  
+
   // Use refs to persist chat client and room across re-renders
   const realtimeClientRef = useRef<Ably.Realtime | null>(null)
   const chatClientRef = useRef<ChatClient | null>(null)
@@ -83,13 +83,13 @@ export default function ChatRoom() {
   }
 
   async function sendMessage(text: string) {
-    console.log('sendMessage called', { 
-      roomExists: !!room, 
+    console.log('sendMessage called', {
+      roomExists: !!room,
       sessionExists: !!session?.user,
       roomType: typeof room,
       roomKeys: room ? Object.keys(room) : null
     })
-    
+
     if (!room || !session?.user) {
       console.error('Cannot send message: room or session not available', { room: !!room, session: !!session?.user })
       return
@@ -103,14 +103,14 @@ export default function ChatRoom() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
-      
+
       if (!dbResponse.ok) {
         const error = await dbResponse.json()
         console.error('Failed to save message to database:', error)
       } else {
         console.log('✓ Message saved to database')
       }
-      
+
       // Then send via Ably for real-time delivery
       await room.messages.send({ text })
     } catch (error) {
@@ -121,7 +121,7 @@ export default function ChatRoom() {
 
   async function addReaction(messageId: string, emoji: string) {
     if (!room) return
-    
+
     try {
       // For message reactions, use messages.reactions.send instead
       // Room reactions are ephemeral and not tied to specific messages
@@ -166,12 +166,12 @@ export default function ChatRoom() {
         console.log('Chat already initialized or component unmounted, skipping setup')
         return
       }
-      
+
       if (!session?.user) {
         console.log('No session available, skipping chat setup')
         return
       }
-      
+
       isInitializedRef.current = true
 
       try {
@@ -179,7 +179,7 @@ export default function ChatRoom() {
 
         // Reuse existing Ably client if already connected, otherwise create new one
         let realtimeClient = realtimeClientRef.current
-        
+
         if (!realtimeClient || realtimeClient.connection.state !== 'connected') {
           console.log('Creating new Ably Realtime client...')
           realtimeClient = new Ably.Realtime({
@@ -187,7 +187,7 @@ export default function ChatRoom() {
             clientId: session.user.email!,
           })
           realtimeClientRef.current = realtimeClient
-          
+
           const clientForConnection = realtimeClient
 
           // Wait for the client to connect
@@ -216,7 +216,7 @@ export default function ChatRoom() {
               })
             })
           }
-          
+
           await connectionPromiseRef.current
         } else {
           console.log('Reusing existing Ably connection')
@@ -250,9 +250,9 @@ export default function ChatRoom() {
           } else {
             console.log('Reusing existing room')
           }
-          
+
           if (!isMounted) return
-          
+
           console.log('Setting room state, room:', currentRoomRef.current)
           setRoom(currentRoomRef.current)
           console.log('✓ Room state set')
@@ -284,22 +284,22 @@ export default function ChatRoom() {
         // Only set up subscriptions once per room to prevent duplicates
         if (subscriptionsRef.current.length === 0) {
           console.log('Setting up room subscriptions...')
-          
+
           // Subscribe to messages with proper cleanup and deduplication
           const messageSub = currentRoomRef.current.messages.subscribe(async (messageEvent) => {
             const messageId = messageEvent.message.serial || Date.now().toString()
-            
+
             // Prevent duplicate messages
             if (messageIdsRef.current.has(messageId)) {
               console.log('Skipping duplicate message:', messageId)
               return
             }
-            
+
             messageIdsRef.current.add(messageId)
-            
+
             const clientEmail = messageEvent.message.clientId || ''
             const userName = clientEmail ? await getFlonaName(clientEmail) : 'Anonymous'
-            
+
             const newMessage: Message = {
               id: messageId,
               text: messageEvent.message.text || '',
@@ -328,14 +328,14 @@ export default function ChatRoom() {
             if (session.user?.email) {
               typingSet.delete(session.user.email)
             }
-            
+
             // Convert emails to flona names
             const flonaNames: string[] = []
             for (const email of typingSet) {
               const flonaName = await getFlonaName(email)
               flonaNames.push(flonaName)
             }
-            
+
             setTypingUsers(new Set(flonaNames))
           })
           subscriptionsRef.current.push(typingSub)
@@ -394,7 +394,7 @@ export default function ChatRoom() {
         }
       })
       subscriptionsRef.current = []
-      
+
       // Only detach room, but keep the client alive for potential reuse
       if (currentRoomRef.current) {
         try {
@@ -404,11 +404,11 @@ export default function ChatRoom() {
         }
         currentRoomRef.current = null
       }
-      
+
       messageIdsRef.current.clear()
       // Reset init flag so component can reinitialize when remounting
       isInitializedRef.current = false
-      
+
       // Don't destroy the Ably client or chat client - keep them for reuse
       // They will be properly cleaned up when the app unmounts or user logs out
     }
@@ -421,40 +421,11 @@ export default function ChatRoom() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Campus Chat</h1>
-            <p className="text-sm text-gray-500">
-              Global Chatroom · {onlineUsers.length} online
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/events"
-              className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
-            >
-              Events Map
-            </Link>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{currentUserFlonaName}</p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* Chat Area */}
       <div className="flex-1 max-w-4xl w-full mx-auto flex flex-col">
-        <MessageList 
-          messages={messages} 
-          currentUserEmail={session?.user?.email || ''} 
+        <MessageList
+          messages={messages}
+          currentUserEmail={session?.user?.email || ''}
           onAddReaction={addReaction}
           typingUsers={Array.from(typingUsers)}
         />

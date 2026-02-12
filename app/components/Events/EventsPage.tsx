@@ -215,32 +215,6 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="sticky top-0 z-50 bg-white shadow-sm border-b">
-        <div className="max-w-full mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Campus Events</h1>
-            <p className="text-sm text-gray-500">Discover and create campus-bound events</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
-            >
-              Back to Chat
-            </Link>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{currentUserFlonaName}</p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
-
       <div className="flex-1 flex">
         {/* Map Section */}
         <div className="flex-1 flex flex-col">

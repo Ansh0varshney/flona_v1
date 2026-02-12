@@ -15,11 +15,28 @@ model User {
   
   email     String   @unique
   image     String?
+  bio       String?
   createdAt DateTime @default(now())
 
   events       Event[]
   comments     Comment[]
   chatMessages ChatMessage[]
+  
+  blockedBy    Block[] @relation("BlockedBy")
+  blocking     Block[] @relation("Blocking")
+}
+
+model Block {
+  id        Int      @id @default(autoincrement())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker   User     @relation("Blocking", fields: [blockerId], references: [id])
+  blocked   User     @relation("BlockedBy", fields: [blockedId], references: [id])
+
+  @@unique([blockerId, blockedId])
+  @@map("blocks")
 }
 
 model Event {
