@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  flona_name String? @unique
+  
+  email     String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+
+  events       Event[]
+  comments     Comment[]
+  chatMessages ChatMessage[]
+}
+
+model Event {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  lat           Float
+  lng           Float
+  location_name String
+  start_time    DateTime
+  end_time      DateTime
+  created_by    String
+  created_at    DateTime @default(now())
+
+  creator   User      @relation(fields: [created_by], references: [id])
+  comments  Comment[]
+
+  @@map("events")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  event_id  Int
+  user_id   String
+  content   String
+  created_at DateTime @default(now())
+
+  event Event @relation(fields: [event_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+  @@map("comments")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  user_id   String
+  user_name String
+  user_email String
+  text      String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([created_at])
+  @@map("chat_messages")
+}
